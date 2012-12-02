@@ -16,6 +16,7 @@
   "license": "",
   "dependencies": {
     "esprima": "1.0.x",
-    "escodegen": "0.0.x"
+    "escodegen": "0.0.x",
+    "estraverse": "0.0.x"
   }
 }
