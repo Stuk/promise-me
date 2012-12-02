@@ -18,11 +18,10 @@ var genOptions = {
 exports.convert = function(code) {
     // parse
     var ast = esprima.parse(code, parseOptions);
-    // console.log(ast);
-
+    // console.log(JSON.stringify(ast));
     // walk ast
     estraverse.replace(ast, {
-        enter: replacer
+        leave: replacer
     });
 
     // generate
@@ -31,6 +30,33 @@ exports.convert = function(code) {
     return escodegen.generate(ast);
 };
 
-function replacer(node, _, notify) {
+function replacer(node, parent, notify) {
+    if(node.type === "CallExpression") {
+        var args = node.arguments;
+        if(args.length && args[args.length - 1].type === "FunctionExpression") {
+            var fn = node;
+            var callback = args.pop();
 
+            return {
+                "type": "CallExpression",
+                "callee": {
+                    "type": "MemberExpression",
+                    "computed": false,
+                    "object": fn,
+                    "property": {
+                        "type": "Identifier",
+                        "name": "then"
+                    }
+                },
+                "arguments": callbackToThenArguments(callback)
+            };
+
+        }
+    }
+}
+
+function callbackToThenArguments(callback) {
+    var errorArg = callback.params.shift();
+
+    return [callback];
 }
