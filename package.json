@@ -4,7 +4,7 @@
   "description": "Code transformer to change Node-style callbacks into promises",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jasmine-node spec/"
   },
   "repository": "",
   "keywords": [
@@ -18,5 +18,8 @@
     "esprima": "1.0.x",
     "escodegen": "0.0.x",
     "estraverse": "0.0.x"
+  },
+  "devDependencies": {
+    "jasmine-node": "1.0.x"
   }
 }
