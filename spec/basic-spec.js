@@ -2,26 +2,77 @@
 
 var promiseMe = require("../index.js");
 
+function convertFunctionToString(fn) {
+    var lines = fn.toString().split("\n");
+    lines.pop();
+    lines.shift();
+    lines = lines.map(function(line) {
+        return line.trim();
+    });
+    return lines.join("\n");
+}
+
+// This utility function allows us to write tests as Javascript functions
+// instead of strings. Note: the functions are never executed so they don't
+// need to make semantic sense.
+var compare = function(before, after) {
+    before = convertFunctionToString(before);
+    after = convertFunctionToString(after);
+
+    expect(promiseMe.convert(
+        before,
+        {format: {indent: {style: '', base: 0 }}}
+    )).toEqual(after);
+};
+
 describe("promise-me basics", function() {
+    // defined to avoid jshint errors
+    var a, b, c, d, e, f, g, h, i, j;
+
     it("changes a callback to then", function() {
-        expect(
-            promiseMe.convert("a(function(err, value){ console.log(value); })")
-        ).toEqual("a().then(function (value) {\n    console.log(value);\n});");
+        compare(function() {
+            a(function(err, value) {
+                console.log(value);
+            });
+        }, function() {
+            a().then(function (value) {
+                console.log(value);
+            });
+        });
     });
 
     describe("error handler", function() {
         it("creates a rejection handler from if statement", function() {
-            expect(
-                promiseMe.convert("a(function(err, value){ if(err) { return; } console.log(value); })")
-            ).toEqual("a().then(function (value) {\n    console.log(value);\n}, function (err) {\n    return;\n});");
+            compare(function() {
+                a(function(err, value) {
+                    if(err) {
+                        return;
+                    }
+                    console.log(value);
+                });
+            }, function() {
+                a().then(function (value) {
+                    console.log(value);
+                }, function (err) {
+                    return;
+                });
+            });
         });
 
         it("handles consequant that isn't a block statement", function() {
-            expect(
-                promiseMe.convert("a(function(err, value){ if(err) return; console.log(value); })")
-            ).toEqual("a().then(function (value) {\n    console.log(value);\n}, function (err) {\n    return;\n});");
+            compare(function() {
+                a(function(err, value) {
+                    if(err) return;
+                    console.log(value);
+                });
+            }, function() {
+                a().then(function (value) {
+                    console.log(value);
+                }, function (err) {
+                    return;
+                });
+            });
         });
-
     });
 
 });
