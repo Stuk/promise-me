@@ -31,32 +31,35 @@ exports.convert = function(code) {
 };
 
 function replacer(node, parent, notify) {
-    if(node.type === "CallExpression") {
+    if(node.type === "CallExpression" && hasNodeCallback(node)) {
         var args = node.arguments;
-        if(args.length && args[args.length - 1].type === "FunctionExpression") {
-            var fn = node;
-            var callback = args.pop();
+        var fn = node;
+        var callback = args.pop();
 
-            return {
-                "type": "CallExpression",
-                "callee": {
-                    "type": "MemberExpression",
-                    "computed": false,
-                    "object": fn,
-                    "property": {
-                        "type": "Identifier",
-                        "name": "then"
-                    }
-                },
-                "arguments": callbackToThenArguments(callback)
-            };
-
-        }
+        return {
+            "type": "CallExpression",
+            "callee": {
+                "type": "MemberExpression",
+                "computed": false,
+                "object": fn,
+                "property": {
+                    "type": "Identifier",
+                    "name": "then"
+                }
+            },
+            "arguments": callbackToThenArguments(callback)
+        };
     }
+}
+
+function hasNodeCallback(node) {
+    var args = node.arguments;
+    // TODO check callback has two arguments
+    return args.length && args[args.length - 1].type === "FunctionExpression";
 }
 
 function callbackToThenArguments(callback) {
     var errorArg = callback.params.shift();
-
+    // TODO add reject callback
     return [callback];
 }
