@@ -59,7 +59,54 @@ function hasNodeCallback(node) {
 }
 
 function callbackToThenArguments(callback) {
+    var thenArgs = [callback];
+
     var errorArg = callback.params.shift();
-    // TODO add reject callback
-    return [callback];
+
+    var errback = getErrorHandler(callback, errorArg);
+    if (errback) {
+        thenArgs.push(errback);
+    }
+
+    return thenArgs;
+}
+
+function getErrorHandler(callback, errorArg) {
+    var errorArgName = errorArg.name;
+    if (callback.body.type === 'BlockStatement') {
+        var body = callback.body.body;
+        for (var i = 0, len = body.length; i < len; i++) {
+            // Only matches
+            // if (error) ...
+            // TODO: think about matching if (err !== null) and others
+            if (
+                body[i].type === "IfStatement" &&
+                body[i].test.type === 'Identifier' &&
+                body[i].test.name === errorArgName
+            ) {
+                var handler = body.splice(i, 1)[0].consequent;
+
+                if (handler.type !== "BlockStatement") {
+                    handler = {
+                        "type": "BlockStatement",
+                        "body": [handler]
+                    };
+                }
+
+                return {
+                    "type": "FunctionExpression",
+                    "id": null,
+                    // give the new function the same error argument
+                    "params": [errorArg],
+                    "defaults": [],
+                    // the body is the body of the if
+                    "body": handler,
+                    "rest": null,
+                    "generator": false,
+                    "expression": false
+                };
+            }
+
+        }
+    }
 }
