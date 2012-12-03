@@ -75,4 +75,61 @@ describe("promise-me basics", function() {
         });
     });
 
+    describe("nested", function() {
+        describe("callbacks", function() {
+            it("are transformed into a chained thens", function() {
+                compare(function() {
+                    a(function (errA, valueA) {
+                        b(valueA, function (errB, valueB) {
+                            console.log(valueB);
+                        });
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (valueB) {
+                        console.log(valueB);
+                    });
+                });
+            });
+        });
+
+        describe("thens", function() {
+            it("are transformed into chained thens", function() {
+                compare(function() {
+                    a().then(function (valueA) {
+                        b(valueA).then(function (c) {});
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (c) {});
+                });
+            });
+
+            it("that are also chained are flattened", function() {
+                compare(function() {
+                    a().then(function (valueA) {
+                        b(valueA).then(function (c) {}).then(function (d) {});
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (c) {}).then(function (d) {});
+                });
+            });
+
+            it("that are called on an object are flattened", function() {
+                compare(function() {
+                    a().then(function (valueA) {
+                        b(valueA).then(function(c) {}).then(function(d) {});
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (c) {}).then(function (d) {});
+                });
+            });
+        });
+    });
 });
