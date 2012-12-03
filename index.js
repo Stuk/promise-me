@@ -15,33 +15,43 @@ var genOptions = {
     comment: true
 };
 
-exports.convert = function(code) {
+// TODO: do more processing on the options array
+exports.convert = function(code, options) {
     // parse
     var ast = esprima.parse(code, parseOptions);
-    // console.log(JSON.stringify(ast));
+
     // walk ast
     estraverse.replace(ast, {
-        leave: replacer
+        leave: callbackReplacer
+    });
+
+    estraverse.replace(ast, {
+        enter: thenFlattener
     });
 
     // generate
     // TODO make comments work
     ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
-    return escodegen.generate(ast);
+    return escodegen.generate(ast, options);
 };
 
-function replacer(node, parent, notify) {
+function callbackReplacer(node, parent, notify) {
     if(node.type === "CallExpression" && hasNodeCallback(node)) {
-        var args = node.arguments;
-        var fn = node;
+        // the called function
+        var func = node;
+        // arguments to called function
+        var args = func.arguments;
+        // the last argument is the callback we need to turn into promise
+        // handlers
         var callback = args.pop();
 
+        // create a call to .then()
         return {
             "type": "CallExpression",
             "callee": {
                 "type": "MemberExpression",
                 "computed": false,
-                "object": fn,
+                "object": func,
                 "property": {
                     "type": "Identifier",
                     "name": "then"
@@ -109,4 +119,8 @@ function getErrorHandler(callback, errorArg) {
 
         }
     }
+}
+
+function thenFlattener(node, parent, notify) {
+
 }
