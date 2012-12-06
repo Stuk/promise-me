@@ -31,7 +31,7 @@ exports.convert = function(code, options) {
 
     // generate
     // TODO make comments work
-    ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+    // ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
     return escodegen.generate(ast, options);
 };
 
