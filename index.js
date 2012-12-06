@@ -64,8 +64,8 @@ function callbackReplacer(node, parent, notify) {
 
 function hasNodeCallback(node) {
     var args = node.arguments;
-    // TODO check callback has two arguments
-    return args.length && args[args.length - 1].type === "FunctionExpression";
+    return args.length && args[args.length - 1].type === "FunctionExpression" &&
+        args[args.length - 1].params.length === 2;
 }
 
 function callbackToThenArguments(callback) {
