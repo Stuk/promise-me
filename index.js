@@ -35,7 +35,14 @@ exports.convert = function(code, options, log) {
     return escodegen.generate(ast, options);
 };
 
-function callbackReplacer(node, parent, notify) {
+/**
+ * Visitor to each node that replaces Node callbacks with then calls.
+ * @param  {Object} node   Any type of node.
+ * @return {Object|undefined} If the CallExpression has a node callback returns
+ * a CallExpression node that calls ".then" on the result of the original
+ * function call, or undefined.
+ */
+function callbackReplacer(node) {
     if(node.type === "CallExpression" && hasNodeCallback(node)) {
         // the called function
         var func = node;
@@ -61,13 +68,27 @@ function callbackReplacer(node, parent, notify) {
         };
     }
 }
-
+/**
+ * Checks if a CallExpression has a node callback. Heuristic: last argument
+ * is a FunctionExpression, and that FunctionExpression has two arguments.
+ * TODO: check first FunctionExpression argument is called something like "err",
+ * or "error". Maybe that would be too presumptuous.
+ * @param  {Object}  node CallExpression node.
+ * @return {Boolean}      true if the node has a Node callback, false otherwise.
+ */
 function hasNodeCallback(node) {
     var args = node.arguments;
     return args.length && args[args.length - 1].type === "FunctionExpression" &&
         args[args.length - 1].params.length === 2;
 }
 
+/**
+ * Convert a Node callback to arguments for a then call.
+ * Removes the first (error) argument from the function. Checks if the error
+ * arg is handled, if so it creates a rejection handler function.
+ * @param  {Object} callback FunctionExpression node.
+ * @return {Array}            Array of one or two FunctionExpression nodes.
+ */
 function callbackToThenArguments(callback) {
     var thenArgs = [callback];
 
@@ -81,6 +102,15 @@ function callbackToThenArguments(callback) {
     return thenArgs;
 }
 
+/**
+ * Checks if the given FunctionExpression checks if the given error arg is
+ * checked and handled. If so, returns a function containing the contents
+ * of the if block.
+ * @param  {Object} callback FunctionExpression node.
+ * @param  {string}   errorArg The name of the error argument.
+ * @return {Object|undefined} A FunctionExpression node if the error was
+ * handled, or undefined if not.
+ */
 function getErrorHandler(callback, errorArg) {
     var errorArgName = errorArg.name;
     if (callback.body.type === 'BlockStatement') {
@@ -121,7 +151,17 @@ function getErrorHandler(callback, errorArg) {
     }
 }
 
-function thenFlattener(node, parent, notify) {
+/**
+ * Visitor that looks for promises as the last statement of a function, and
+ * moves the ".then" call to be called on the result of the function call.
+ * TODO: check if the "then" function (or any of its children) close on any
+ * variables in this function. If so we shouldn't flatten.
+ * @param  {Object} node   Any type of node.
+ * @return {Object|undefined} If the last statment is a promise, then returns
+ * a CallExpression that calls ".then" on the result of the original function
+ * call.
+ */
+function thenFlattener(node) {
     if (isThenCallWithThenCallAsLastStatement(node)) {
         var body = node.arguments[0].body.body;
         var lastStatement = body[body.length - 1];
@@ -153,7 +193,12 @@ function thenFlattener(node, parent, notify) {
         };
     }
 }
-
+/**
+ * Checks if this is a ".then" CallExpression, and if so checks if the last
+ * statment is a function call with ".then" called on it.
+ * @param  {Object}  node Any type node.
+ * @return {Boolean}
+ */
 function isThenCallWithThenCallAsLastStatement(node) {
     var callee, firstArg, firstArgBody;
     if (doesMatch(node, {
