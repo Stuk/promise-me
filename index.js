@@ -178,7 +178,7 @@ function thenFlattener(node) {
         // Wrap the outer function call in a MemberExpression, so that we can
         // call then(thenArguments) on the result (which is the return value,
         // which is the return value of functionCall)
-        return {
+        return thenFlattener({
             type: "CallExpression",
             callee: {
                 type: "MemberExpression",
@@ -190,7 +190,9 @@ function thenFlattener(node) {
                 }
             },
             arguments: thenArguments
-        };
+        });
+    } else {
+        return node;
     }
 }
 /**
