@@ -1,7 +1,7 @@
 {
   "name": "promise-me",
-  "version": "0.0.0",
-  "description": "Code transformer to change Node-style callbacks into promises",
+  "version": "0.0.1",
+  "description": "Code transformer to change Node-style callbacks into promises.",
   "main": "index.js",
   "scripts": {
     "test": "jasmine-node spec/"
@@ -13,7 +13,7 @@
     "transform"
   ],
   "author": "Stuart Knightley",
-  "license": "",
+  "license": "BSD",
   "dependencies": {
     "esprima": "1.0.x",
     "escodegen": "0.0.x",
