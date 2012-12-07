@@ -1,8 +1,5 @@
-fs.readFile("test.js", "utf8", function (err, data) {
-    if (err) {
-        console.error(err);
-        return;
-    }
-
-    console.log(data);
+one().then(function (dataA) {
+    two(dataA).then(function (dataB) {
+        return three(dataB);
+    });
 });
