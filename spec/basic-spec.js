@@ -113,6 +113,24 @@ describe("promise-me basics", function() {
                         console.log(valueB);
                     });
                 });
+
+                compare(function () {
+                    a(function (errA, valueA) {
+                        b(valueA, function (errB, valueB) {
+                            c(valueB, function (errC, valueC) {
+                                console.log(valueC);
+                            });
+                        });
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (valueB) {
+                        return c(valueB);
+                    }).then(function (valueC) {
+                        console.log(valueC);
+                    });
+                });
             });
         });
 
