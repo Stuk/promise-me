@@ -16,7 +16,7 @@ var genOptions = {
 };
 
 // TODO: do more processing on the options array
-exports.convert = function(code, options) {
+exports.convert = function(code, options, log) {
     // parse
     var ast = esprima.parse(code, parseOptions);
 
@@ -122,5 +122,95 @@ function getErrorHandler(callback, errorArg) {
 }
 
 function thenFlattener(node, parent, notify) {
+    if (isThenCallWithThenCallAsLastStatement(node)) {
+        var body = node.arguments[0].body.body;
+        var lastStatement = body[body.length - 1];
 
+        var functionCall = lastStatement.expression.callee.object;
+        var thenArguments = lastStatement.expression.arguments;
+
+        // Change last statement to just return the function call
+        body[body.length - 1] = {
+            type: "ReturnStatement",
+            argument: functionCall
+        }
+
+        // Wrap the outer function call in a MemberExpression, so that we can
+        // call then(thenArguments) on the result (which is the return value,
+        // which is the return value of functionCall)
+        return {
+            type: "CallExpression",
+            callee: {
+                type: "MemberExpression",
+                computed: false,
+                object: node,
+                property: {
+                    type: "Identifier",
+                    name: "then"
+                }
+            },
+            arguments: thenArguments
+        };
+    }
+}
+
+function isThenCallWithThenCallAsLastStatement(node) {
+    var callee, firstArg, firstArgBody;
+    if (doesMatch(node, {
+        type: "CallExpression",
+        callee: {
+            type: "MemberExpression",
+            property: {
+                type: "Identifier",
+                name: "then"
+            }
+        },
+        arguments: [
+            {
+                type: "FunctionExpression",
+                body: {
+                    type: "BlockStatement"
+                }
+            }
+        ]
+    })) {
+        var body = node.arguments[0].body.body;
+        var lastStatement = body[body.length - 1];
+        return doesMatch(lastStatement, {
+            type: "ExpressionStatement",
+            expression: {
+                type: "CallExpression",
+                callee: {
+                    type: "MemberExpression",
+                    property: {
+                        type: "Identifier",
+                        name: "then"
+                    }
+                }
+            }
+        });
+    }
+
+    return false;
+}
+
+/**
+ * Returns true if and only if for every property in matchObject, object
+ * contains the same property with the same value. Objects are compared deeply.
+ * Short circuits, so if a property does not exist in object then no errors are
+ * raised.
+ * The is means object can contain other properties that are not defined in
+ * matchObject
+ * @param  {any} object      The object to test.
+ * @param  {any} matchObject The object that object must match.
+ * @return {boolean}             See above.
+ */
+function doesMatch(object, matchObject) {
+    if (!object || matchObject === null || typeof matchObject !== "object") {
+        return object === matchObject;
+    }
+
+    return Object.keys(matchObject).every(function(prop) {
+        return doesMatch(object[prop], matchObject[prop]);
+    });
 }
