@@ -95,6 +95,24 @@ describe("promise-me basics", function() {
                 });
             });
         });
+
+        it("handles if else/alternate", function() {
+            compare(function() {
+                a(function (err, value) {
+                    if(err) {
+                        console.error(err);
+                    } else {
+                        console.log(value);
+                    }
+                });
+            }, function() {
+                a().then(function (value) {
+                    console.log(value);
+                }, function (err) {
+                    console.error(err);
+                });
+            });
+        });
     });
 
     describe("nested", function() {
