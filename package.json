@@ -3,10 +3,15 @@
   "version": "0.0.1",
   "description": "Code transformer to change Node-style callbacks into promises.",
   "main": "index.js",
+  "preferGlobal": true,
+  "bin" : "./bin/promise-me",
   "scripts": {
     "test": "jasmine-node spec/"
   },
-  "repository": "",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/Stuk/promise-me.git"
+  },
   "keywords": [
     "promise",
     "esprima",
