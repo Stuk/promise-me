@@ -6,4 +6,6 @@
     font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
     font-size: 12px;
     height: 20em;
+    white-space: pre;
+    overflow: scroll;
 }

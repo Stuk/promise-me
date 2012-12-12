@@ -15,10 +15,24 @@
             "prototype": "ui/demo.reel[PromiseMeConverter]"
         },
 
+        "exampleSelect": {
+            "prototype": "montage/ui/select.reel",
+            "properties": {
+                "element": {"#": "exampleSelect"},
+                "textPropertyPath": "name"
+            },
+            "bindings": {
+                "contentController": {"<-": "@owner.examplesController"}
+            }
+         },
+
         "before": {
             "prototype": "montage/ui/textarea.reel",
             "properties": {
                 "element": {"#": "before"}
+            },
+            "bindings": {
+                "value": {"<-": "@owner.examplesController.selectedObjects.0.code"}
             }
         },
 
@@ -37,16 +51,15 @@
 <body>
     <div data-montage-id="demo" class="Demo">
         <div class="row">
-            <div class="span12">
-                <select data-montage-id="examples">
-                    <option value="simple">Simple Callback</option>
-                </select>
-            </div>
+            <label class="span12">
+                Pick an example:
+                <select data-montage-id="exampleSelect"></select>
+            </label>
         </div>
 
         <div class="row input">
-            <div class="span6"><textarea data-montage-id="before" class="span6"></textarea></div>
-            <div class="span6"><textarea data-montage-id="after" class="span6"></textarea></div>
+            <div class="span6"><textarea data-montage-id="before" class="span6" wrap="off"></textarea></div>
+            <div class="span6"><textarea data-montage-id="after" class="span6" wrap="off"></textarea></div>
         </div>
     </div>
 </body>
