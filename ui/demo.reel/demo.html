@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="demo.css">
+    <script type="text/montage-serialization">
+    {
+        "owner": {
+            "properties": {
+                "element": {"#": "demo"}
+            }
+        },
+
+        "promiseMeConverter": {
+            "prototype": "ui/demo.reel[PromiseMeConverter]"
+        },
+
+        "before": {
+            "prototype": "montage/ui/textarea.reel",
+            "properties": {
+                "element": {"#": "before"}
+            }
+        },
+
+        "after": {
+            "prototype": "montage/ui/textarea.reel",
+            "properties": {
+                "element": {"#": "after"}
+            },
+            "bindings": {
+                "value": {"<-": "@before.value", "converter": {"@": "promiseMeConverter"}}
+            }
+        }
+    }
+    </script>
+</head>
+<body>
+    <div data-montage-id="demo" class="Demo">
+        <div class="row">
+            <div class="span12">
+                <select data-montage-id="examples">
+                    <option value="simple">Simple Callback</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row input">
+            <div class="span6"><textarea data-montage-id="before" class="span6"></textarea></div>
+            <div class="span6"><textarea data-montage-id="after" class="span6"></textarea></div>
+        </div>
+    </div>
+</body>
+</html>
