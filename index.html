@@ -20,9 +20,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>Promise Me</h1>
-        <p>Convert callbacks to promises</p>
+        <div class="row">
+            <h1 class="span8">Promise Me</h1>
+            <div class="span4" style="margin: 15px 0 30px; line-height: 40px">
+                <a href="https://github.com/Stuk/promise-me" class="btn btn-success" style="float: right">View code and download</a>
+            </div>
+        </div>
 
+        <p class="lead">Promise Me helps you convert your Javascript code from using callbacks to using <a href="http://wiki.commonjs.org/wiki/Promises/A">promises</a>, for example through <a href="https://github.com/kriskowal/q">Q</a>, <a href="https://github.com/tildeio/rsvp.js">RSVP.js</a> or <a href="https://github.com/cujojs/when">when.js</a>.</p>
+        <p>It parses your code and then manipulates the AST to transform the callbacks into calls to <code>then()</code>, including a rejection handler if you handle the original callback error. Think of it as a slightly smarter find-and-replace. It will probably break your code and require you to fix it.</p>
+
+
+        <h2>Demo</h2>
         <div data-montage-id="demo"></div>
 
     </div>
