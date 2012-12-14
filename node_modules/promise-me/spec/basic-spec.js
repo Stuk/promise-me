@@ -192,4 +192,20 @@ describe("promise-me basics", function() {
             });
         });
     });
+
+    describe("comments", function() {
+        it("keeps comments", function() {
+            compare(function() {
+                a(function (err, value) {
+                    // log the value
+                    console.log(value);
+                });
+            }, function() {
+                a().then(function (value) {
+                    // log the value
+                    console.log(value);
+                });
+            });
+        });
+    });
 });

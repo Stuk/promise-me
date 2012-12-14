@@ -15,23 +15,40 @@ var genOptions = {
     comment: true
 };
 
-// TODO: do more processing on the options array
+/**
+ * Convert the given code to use promises.
+ * @param  {string} code    String containing Javascript code.
+ * @param  {Object} options Options for generation.
+ * @param  {Function} log   Function to call with log messages.
+ * @return {string}         The Javascript code with callbacks replaced with
+ * .then() functions.
+ */
 exports.convert = function(code, options, log) {
-    // parse
+    if (options) {
+        for (var p in genOptions) {
+            if (options[p] === undefined) {
+                options[p] = genOptions[p];
+            }
+        }
+    } else {
+        options = genOptions;
+    }
+
+    // Parse
     var ast = esprima.parse(code, parseOptions);
 
-    // walk ast
+    // Add comments to nodes.
+    ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
+
+    // Do the magic
     estraverse.replace(ast, {
         leave: callbackReplacer
     });
-
     estraverse.replace(ast, {
         enter: thenFlattener
     });
 
     // generate
-    // TODO make comments work
-    // ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
     return escodegen.generate(ast, options);
 };
 

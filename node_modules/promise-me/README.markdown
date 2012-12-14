@@ -1,11 +1,11 @@
-Promise Me
+Promise Me [![Build Status](https://secure.travis-ci.org/Stuk/promise-me.png?branch=master)](https://travis-ci.org/Stuk/promise-me)
 ==========
 
 Promise Me helps you move your code from using callbacks to using [promises](http://wiki.commonjs.org/wiki/Promises/A), for example through [Q](https://github.com/kriskowal/q), [RSVP.js](https://github.com/tildeio/rsvp.js) or [when.js](https://github.com/cujojs/when).
 
 It parses your code and then manipulates the AST to transform the callbacks into calls to `then()`, including a rejection handler if you handle the original callback error. Think of it as a slightly smarter find-and-replace. It will probably break your code and require you to fix it.
 
-[![Build Status](https://secure.travis-ci.org/Stuk/promise-me.png?branch=master)](https://travis-ci.org/Stuk/promise-me)
+
 
 Installation and usage
 ----------------------
