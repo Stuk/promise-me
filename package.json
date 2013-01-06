@@ -4,6 +4,5 @@
     "dependencies": {
         "montage": "0.12.x",
         "promise-me": "*"
-    },
-    "bundle": ["ui/demo.reel"]
+    }
 }
