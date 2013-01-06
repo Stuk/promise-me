@@ -1,9 +1,0 @@
-{
-    "name": "promise-me-website",
-    "version": "0.0.0",
-    "dependencies": {
-        "montage": "0.12.x",
-        "promise-me": "*"
-    },
-    "bundle": ["ui/demo.reel"]
-}
