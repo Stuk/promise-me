@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var fs = require("fs");
 
-var promiseMe = require("../index");
+var promiseMe = require("../promise-me");
 
 var content = fs.readFileSync(process.argv[2], "utf8");
 
