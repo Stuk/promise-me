@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RequireJS Jasmine Spec Runner</title>
+    <meta charset="utf-8" />
+
+    <link rel="stylesheet" href="../node_modules/jasmine-node/node_modules/jasmine-reporters/ext/jasmine.css" />
+    <script src="../node_modules/jasmine-node/node_modules/jasmine-reporters/ext/jasmine.js"></script>
+    <script src="../node_modules/jasmine-node/node_modules/jasmine-reporters/ext/jasmine-html.js"></script>
+    <script src="../node_modules/requirejs/require.js"></script>
+
+    <script>
+        (function() {
+            // include package.json dependencies here...
+            var paths = {
+                "esprima": "../node_modules/esprima/esprima",
+                "escodegen": "../node_modules/escodegen/escodegen",
+                "estraverse": "../node_modules/estraverse/estraverse"
+            };
+
+            // include spec files here...
+            var specs = [
+                "basic-spec"
+            ];
+
+
+            require.config({ paths: paths });
+            require(specs, function(){
+                var jasmineEnv = jasmine.getEnv();
+                jasmineEnv.updateInterval = 1000;
+
+                var htmlReporter = new jasmine.TrivialReporter();
+
+                jasmineEnv.addReporter(htmlReporter);
+
+                jasmineEnv.specFilter = function(spec) {
+                return htmlReporter.specFilter(spec);
+                };
+
+                jasmineEnv.execute();
+            });
+        })();
+    </script>
+</head>
+
+<body>
+</body>
+</html>

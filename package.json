@@ -25,6 +25,7 @@
     "estraverse": "0.0.x"
   },
   "devDependencies": {
-    "jasmine-node": "1.0.x"
+    "jasmine-node": "1.0.x",
+    "requirejs": "2.1.x"
   }
 }

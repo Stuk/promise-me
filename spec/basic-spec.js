@@ -1,8 +1,19 @@
 /*global describe,before,it,expect,after */
 
-if (typeof promiseMe === "undefined") {
-    var promiseMe = require("../promise-me.js");
-}
+// UMD from https://github.com/umdjs/umd/blob/master/commonjsStrict.js
+(function (root, factory) {
+    if (typeof exports === "object") {
+        // CommonJS
+        factory(require("../promise-me"));
+    } else if (typeof define === "function" && define.amd) {
+        // AMD. Register as an anonymous module.
+        /*global define*/
+        define(["../promise-me"], factory);
+    } else {
+        // Browser globals
+        factory(root.promiseMe);
+    }
+}(this, function (promiseMe) {
 
 function convertFunctionToString(fn) {
     var lines = fn.toString().split("\n");
@@ -211,3 +222,5 @@ describe("promise-me basics", function() {
         });
     });
 });
+
+})); // UMD
