@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jasmine Spec Runner</title>
+    <meta charset="utf-8" />
+
+    <link rel="stylesheet" href="../node_modules/jasmine-node/node_modules/jasmine-reporters/ext/jasmine.css" />
+    <script src="../node_modules/jasmine-node/node_modules/jasmine-reporters/ext/jasmine.js"></script>
+    <script src="../node_modules/jasmine-node/node_modules/jasmine-reporters/ext/jasmine-html.js"></script>
+
+    <!-- include source files here... -->
+    <script src="../node_modules/esprima/esprima.js"></script>
+    <script src="../node_modules/escodegen/escodegen.js"></script>
+    <script src="../node_modules/estraverse/estraverse.js"></script>
+    <script src="../promise-me.js"></script>
+
+    <!-- include spec files here... -->
+    <script src="basic-spec.js"></script>
+
+    <script>
+        (function() {
+            var jasmineEnv = jasmine.getEnv();
+            jasmineEnv.updateInterval = 1000;
+
+            var reporter = new jasmine.TrivialReporter();
+
+            jasmineEnv.addReporter(reporter);
+
+            jasmineEnv.specFilter = function(spec) {
+                return reporter.specFilter(spec);
+            };
+
+            var currentWindowOnload = window.onload;
+
+            window.onload = function() {
+                if (currentWindowOnload) {
+                    currentWindowOnload();
+                }
+                execJasmine();
+            };
+
+            function execJasmine() {
+                jasmineEnv.execute();
+            }
+
+        })();
+    </script>
+
+</head>
+
+<body>
+</body>
+</html>

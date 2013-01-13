@@ -1,6 +1,8 @@
 /*global describe,before,it,expect,after */
 
-var promiseMe = require("../index.js");
+if (typeof promiseMe === "undefined") {
+    var promiseMe = require("../promise-me.js");
+}
 
 function convertFunctionToString(fn) {
     var lines = fn.toString().split("\n");
