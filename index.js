@@ -1,6 +1,37 @@
-var esprima = require("esprima");
-var escodegen = require("escodegen");
-var estraverse = require("estraverse");
+/*
+Promise Me
+Copyright (c) 2013, Stuart Knightley
+All rights reserved.
+
+Licenced under the New BSD License. See LICENSE for details.
+*/
+
+// UMD from https://github.com/umdjs/umd/blob/master/commonjsStrict.js
+(function (root, factory) {
+    if (typeof exports === "object") {
+        // CommonJS
+        factory(exports,
+            require("esprima"),
+            require("escodegen"),
+            require("estraverse")
+        );
+    } else if (typeof define === "function" && define.amd) {
+        // AMD. Register as an anonymous module.
+        /*global define*/
+        define(["exports",
+            "esprima",
+            "escodegen",
+            "estraverse"
+        ], factory);
+    } else {
+        // Browser globals
+        factory((root.promiseMe = {}),
+            root.esprima,
+            root.escodegen,
+            root.estraverse
+        );
+    }
+}(this, function (exports, esprima, escodegen, estraverse) {
 
 var parseOptions = {
     loc: true,
@@ -278,3 +309,5 @@ function doesMatch(object, matchObject) {
         return doesMatch(object[prop], matchObject[prop]);
     });
 }
+
+})); // UMD
