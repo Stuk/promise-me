@@ -1,6 +1,6 @@
 {
   "name": "promise-me",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Code transformer to change Node-style callbacks into promises.",
   "main": "promise-me.js",
   "preferGlobal": true,
