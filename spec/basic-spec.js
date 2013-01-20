@@ -34,7 +34,7 @@ var compare = function(before, after) {
 
     expect(promiseMe.convert(
         before,
-        {format: {indent: {style: '', base: 0 }}}
+        {generate: {format: {indent: {style: '', base: 0 }}}}
     )).toEqual(after);
 };
 

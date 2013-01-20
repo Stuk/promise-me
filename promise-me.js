@@ -25,13 +25,44 @@ Licenced under the New BSD License. See LICENSE for details.
         ], factory);
     } else {
         // Browser globals
-        factory((root.promiseMe = {}),
+        // The auxilary files also attach to the promiseMe root object, so
+        // don't redefine if it exists
+        factory((root.promiseMe = root.promiseMe || {}),
             root.esprima,
             root.escodegen,
             root.estraverse
         );
     }
 }(this, function (exports, esprima, escodegen, estraverse) {
+
+function curry(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return function() {
+        return fn.apply(this, args.concat(
+        Array.prototype.slice.call(arguments)));
+    };
+}
+
+function isObject(obj) {
+    return obj !== null && typeof obj === "object";
+}
+
+function combine(source, obj) {
+    for(var prop in source) {
+        if (typeof obj[prop] === "undefined") {
+            obj[prop] = source[prop];
+        } else if (isObject(obj[prop]) || isObject(source[prop])) {
+            if(!isObject(obj[prop]) || !isObject(source[prop])) {
+                throw new TypeError("Cannot combine object with non-object, '" + prop + "'");
+            } else {
+                obj[prop] = combine(obj[prop], source[prop]);
+            }
+        } else {
+            obj[prop] = source[prop];
+        }
+    }
+    return obj;
+}
 
 var parseOptions = {
     loc: true,
@@ -46,6 +77,15 @@ var genOptions = {
     comment: true
 };
 
+var defaultOptions = {
+    parse: parseOptions,
+    generate: genOptions,
+
+    matcher: hasNodeCallback,
+    replacer: replaceNodeCallback,
+    flattener: thenFlattener,
+};
+
 /**
  * Convert the given code to use promises.
  * @param  {string} code    String containing Javascript code.
@@ -56,66 +96,48 @@ var genOptions = {
  */
 exports.convert = function(code, options, log) {
     if (options) {
-        for (var p in genOptions) {
-            if (options[p] === undefined) {
-                options[p] = genOptions[p];
-            }
-        }
+        options = combine(defaultOptions, options);
     } else {
-        options = genOptions;
+        options = defaultOptions;
     }
 
     // Parse
-    var ast = esprima.parse(code, parseOptions);
+    var ast = esprima.parse(code, options.parse);
 
     // Add comments to nodes.
     ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
 
     // Do the magic
     estraverse.replace(ast, {
-        leave: callbackReplacer
+        leave: curry(callbackReplacer,  options.matcher, options.replacer)
     });
     estraverse.replace(ast, {
-        enter: thenFlattener
+        enter: options.flattener
     });
 
     // generate
-    return escodegen.generate(ast, options);
+    return escodegen.generate(ast, options.generate);
 };
 
 /**
  * Visitor to each node that replaces Node callbacks with then calls.
- * @param  {Object} node   Any type of node.
+ * @param  {Function} matcher   A function of form `(node) => boolean`. Should
+ * accept any type of node and return true if it should be transformed into
+ * `then` using the replacer and false if not.
+ * @param  {Function} replacer  A function of form `(node) => Node`. Should
+ * accept any type of node and return a new node that uses `then`.
+ * @param  {Object} node        Any type of node.
  * @return {Object|undefined} If the CallExpression has a node callback returns
  * a CallExpression node that calls ".then" on the result of the original
  * function call, or undefined.
  */
-function callbackReplacer(node) {
-    if(node.type === "CallExpression" && hasNodeCallback(node)) {
-        // the called function
-        var func = node;
-        // arguments to called function
-        var args = func.arguments;
-        // the last argument is the callback we need to turn into promise
-        // handlers
-        var callback = args.pop();
-
+function callbackReplacer(matcher, replacer, node) {
+    if(matcher(node)) {
         // create a call to .then()
-        return {
-            "type": "CallExpression",
-            "callee": {
-                "type": "MemberExpression",
-                "computed": false,
-                "object": func,
-                "property": {
-                    "type": "Identifier",
-                    "name": "then"
-                }
-            },
-            "arguments": callbackToThenArguments(callback)
-        };
+        return replacer(node);
     }
 }
+
 /**
  * Checks if a CallExpression has a node callback. Heuristic: last argument
  * is a FunctionExpression, and that FunctionExpression has two arguments.
@@ -124,10 +146,39 @@ function callbackReplacer(node) {
  * @param  {Object}  node CallExpression node.
  * @return {Boolean}      true if the node has a Node callback, false otherwise.
  */
+exports.NODE_MATCHER = hasNodeCallback;
 function hasNodeCallback(node) {
     var args = node.arguments;
-    return args.length && args[args.length - 1].type === "FunctionExpression" &&
+    return node.type === "CallExpression" &&
+        args.length &&
+        args[args.length - 1].type === "FunctionExpression" &&
         args[args.length - 1].params.length === 2;
+}
+
+exports.NODE_REPLACER = replaceNodeCallback;
+function replaceNodeCallback(node) {
+    // the called function
+    var func = node;
+    // arguments to called function
+    var args = func.arguments;
+    // the last argument is the callback we need to turn into promise
+    // handlers
+    var callback = args.pop();
+
+    // TODO retain comments
+    return {
+        "type": "CallExpression",
+        "callee": {
+            "type": "MemberExpression",
+            "computed": false,
+            "object": func,
+            "property": {
+                "type": "Identifier",
+                "name": "then"
+            }
+        },
+        "arguments": callbackToThenArguments(callback)
+    };
 }
 
 /**
@@ -209,6 +260,7 @@ function getErrorHandler(callback, errorArg) {
  * a CallExpression that calls ".then" on the result of the original function
  * call.
  */
+exports.FLATTENER = thenFlattener;
 function thenFlattener(node) {
     if (isThenCallWithThenCallAsLastStatement(node)) {
         var body = node.arguments[0].body.body;
