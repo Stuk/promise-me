@@ -90,6 +90,21 @@ var defaultOptions = {
  * Convert the given code to use promises.
  * @param  {string} code    String containing Javascript code.
  * @param  {Object} options Options for generation.
+ * @param  {Object} options.parse       Options for esprima.parse. See http://esprima.org/doc/ .
+ * @param  {Object} options.generate    Options for escodegen.generate. See https://github.com/Constellation/escodegen/wiki/API .
+ * @param  {Function} options.matcher   A function of form `(node) => boolean`. Must
+ * accept any type of node and return true if it should be transformed into
+ * `then`, using the replacer, and false if not. See
+ * https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API for node
+ * types.
+ * @param  {Function} options.replacer  A function of form `(node) => Node`. Must
+ * accept any type of node and return a new node to replace it that uses `then`
+ * instead of a callback. Will only get called if options.matcher returns true. See
+ * https://developer.mozilla.org/en-US/docs/SpiderMonkey/Parser_API for node
+ * types.
+ * @param  {Function} options.flattener  A function of form `(node) => Node`. Must
+ * accept any type of node, and return either return the original node, or a new
+ * node with the `then` calls flattened.
  * @param  {Function} log   Function to call with log messages.
  * @return {string}         The Javascript code with callbacks replaced with
  * .then() functions.
