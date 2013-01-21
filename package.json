@@ -20,9 +20,9 @@
   "author": "Stuart Knightley",
   "license": "BSD",
   "dependencies": {
-    "esprima": "1.0.x",
-    "escodegen": "0.0.x",
-    "estraverse": "0.0.x"
+    "esprima": "~1.0.2",
+    "escodegen": "~0.0.15",
+    "estraverse": "~0.0.4"
   },
   "devDependencies": {
     "jasmine-node": "1.0.x",
