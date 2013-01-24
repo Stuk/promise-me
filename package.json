@@ -1,12 +1,12 @@
 {
   "name": "promise-me",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Code transformer to change Node-style callbacks into promises.",
   "main": "promise-me.js",
   "preferGlobal": true,
   "bin" : "./bin/promise-me",
   "scripts": {
-    "test": "jasmine-node spec/"
+    "test": "./node_modules/.bin/jasmine-node spec/"
   },
   "repository": {
     "type" : "git",
