@@ -305,14 +305,24 @@ function thenFlattener(node) {
         var parentIdentifiers = root.scopes[1].through;
         // List of all the identifiers used that were not defined in the `then`
         // resolved handler scope
-        var handlerIdentifiers = root.acquire(thenArguments[0]).through;
+        var resolveIdentifiers = root.acquire(thenArguments[0]).through;
 
         // If the `then` handler references variables from outside of its scope
         // that its parent doesn't, then they must have been captured from
         // the parent, and we cannot flatten, so just return the original node
-        for (var i = handlerIdentifiers.length - 1; i >= 0; i--) {
-            if (parentIdentifiers.indexOf(handlerIdentifiers[i]) === -1) {
+        for (var i = resolveIdentifiers.length - 1; i >= 0; i--) {
+            if (parentIdentifiers.indexOf(resolveIdentifiers[i]) === -1) {
                 return node;
+            }
+        }
+
+        // same for rejection handler
+        if (thenArguments.length >= 2) {
+            var rejectIdentifiers = root.acquire(thenArguments[1]).through;
+            for (i = rejectIdentifiers.length - 1; i >= 0; i--) {
+                if (parentIdentifiers.indexOf(rejectIdentifiers[i]) === -1) {
+                    return node;
+                }
             }
         }
 

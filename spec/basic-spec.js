@@ -254,7 +254,7 @@ describe("promise-me basics", function() {
                     });
                 });
             });
-            it("doesn't flatten functions that capture variables", function() {
+            it("doesn't flatten resolution handler that captures variables", function() {
                 compare(function() {
                     a(function (errA, valueA) {
                         b(valueA, function (errB, valueB) {
@@ -273,6 +273,39 @@ describe("promise-me basics", function() {
                         var x = valueB + 2;
                         c().then(function (valueC) {
                             return d(x, valueC);
+                        }).then(function (valueD) {
+                            console.log(valueD);
+                        });
+                    });
+                });
+            });
+            it("doesn't flatten rejection handler that captures variables", function() {
+                compare(function() {
+                    a(function (errA, valueA) {
+                        b(valueA, function (errB, valueB) {
+                            var x = valueB + 2;
+                            c(function (errC, valueC) {
+                                if (errC) {
+                                    console.error(errC + " " + x);
+                                    return;
+                                }
+
+                                d(valueC, function(errD, valueD) {
+                                    console.log(valueD);
+                                });
+                            });
+                        });
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (valueB) {
+                        var x = valueB + 2;
+                        c().then(function (valueC) {
+                            return d(valueC);
+                        }, function (errC) {
+                            console.error(errC + " " + x);
+                            return;
                         }).then(function (valueD) {
                             console.log(valueD);
                         });
