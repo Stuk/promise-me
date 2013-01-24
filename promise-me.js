@@ -13,7 +13,8 @@ Licenced under the New BSD License. See LICENSE for details.
         factory(exports,
             require("esprima"),
             require("escodegen"),
-            require("estraverse")
+            require("estraverse"),
+            require("escope")
         );
     } else if (typeof define === "function" && define.amd) {
         // AMD. Register as an anonymous module.
@@ -21,7 +22,8 @@ Licenced under the New BSD License. See LICENSE for details.
         define(["exports",
             "esprima",
             "escodegen",
-            "estraverse"
+            "estraverse",
+            "escope"
         ], factory);
     } else {
         // Browser globals
@@ -30,10 +32,11 @@ Licenced under the New BSD License. See LICENSE for details.
         factory((root.promiseMe = root.promiseMe || {}),
             root.esprima,
             root.escodegen,
-            root.estraverse
+            root.estraverse,
+            root.escope
         );
     }
-}(this, function (exports, esprima, escodegen, estraverse) {
+}(this, function (exports, esprima, escodegen, estraverse, escope) {
 
 function curry(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
@@ -278,17 +281,46 @@ function getErrorHandler(callback, errorArg) {
 exports.FLATTENER = thenFlattener;
 function thenFlattener(node) {
     if (isThenCallWithThenCallAsLastStatement(node)) {
-        var body = node.arguments[0].body.body;
+        var resolvedFn = node.arguments[0];
+        var body = resolvedFn.body.body;
         var lastStatement = body[body.length - 1];
 
         var functionCall = lastStatement.expression.callee.object;
         var thenArguments = lastStatement.expression.arguments;
 
+        // escope only works with full programs, so lets make one out of
+        // our FunctionExpression
+        var program = {
+            "type": "Program",
+            "body": [{
+                "type": "ExpressionStatement",
+                "expression": resolvedFn
+            }]
+        };
+
+
+        var root = escope.analyze(program);
+        // List of all the identifiers used that were not defined in the
+        // resolvedFn scope
+        var parentIdentifiers = root.scopes[1].through;
+        // List of all the identifiers used that were not defined in the `then`
+        // resolved handler scope
+        var handlerIdentifiers = root.acquire(thenArguments[0]).through;
+
+        // If the `then` handler references variables from outside of its scope
+        // that its parent doesn't, then they must have been captured from
+        // the parent, and we cannot flatten, so just return the original node
+        for (var i = handlerIdentifiers.length - 1; i >= 0; i--) {
+            if (parentIdentifiers.indexOf(handlerIdentifiers[i]) === -1) {
+                return node;
+            }
+        }
+
         // Change last statement to just return the function call
         body[body.length - 1] = {
             type: "ReturnStatement",
             argument: functionCall
-        }
+        };
 
         // Wrap the outer function call in a MemberExpression, so that we can
         // call then(thenArguments) on the result (which is the return value,

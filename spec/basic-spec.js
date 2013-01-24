@@ -163,11 +163,35 @@ describe("promise-me basics", function() {
                     });
                 });
             });
+
+            it("with rejection handlers are transformed into a chained thens", function() {
+                compare(function () {
+                    a(function (errA, valueA) {
+                        if (errA) {
+                            console.error(errA);
+                            return;
+                        }
+                        b(valueA, function (errB, valueB) {
+                            console.log(valueB);
+                        });
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }, function (errA) {
+                        console.error(errA);
+                        return;
+                    }).then(function (valueB) {
+                        console.log(valueB);
+                    });
+                });
+
+            });
         });
 
         // disabled for the moment, as I don't think these are necessary for
         // version 1
-        xdescribe("thens", function() {
+        describe("thens", function() {
             it("are transformed into chained thens", function() {
                 compare(function() {
                     a().then(function (valueA) {
@@ -176,11 +200,12 @@ describe("promise-me basics", function() {
                 }, function() {
                     a().then(function (valueA) {
                         return b(valueA);
-                    }).then(function (c) {});
+                    }).then(function (c) {
+                    });
                 });
             });
 
-            it("that are also chained are flattened", function() {
+            xit("that are also chained are flattened", function() {
                 compare(function() {
                     a().then(function (valueA) {
                         b(valueA).then(function (c) {}).then(function (d) {});
@@ -192,7 +217,7 @@ describe("promise-me basics", function() {
                 });
             });
 
-            it("that are called on an object are flattened", function() {
+            xit("that are called on an object are flattened", function() {
                 compare(function() {
                     a().then(function (valueA) {
                         b(valueA).then(function(c) {}).then(function(d) {});
@@ -201,6 +226,57 @@ describe("promise-me basics", function() {
                     a().then(function (valueA) {
                         return b(valueA);
                     }).then(function (c) {}).then(function (d) {});
+                });
+            });
+        });
+
+        describe("scopes", function() {
+            it("doesn't flatten functions that capture arguments", function() {
+                compare(function() {
+                    a(function (errA, valueA) {
+                        b(valueA, function (errB, valueB) {
+                            c(function (errC, valueC) {
+                                d(valueB, valueC, function(errD, valueD) {
+                                    console.log(valueD);
+                                });
+                            });
+                        });
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (valueB) {
+                        c().then(function (valueC) {
+                            return d(valueB, valueC);
+                        }).then(function (valueD) {
+                            console.log(valueD);
+                        });
+                    });
+                });
+            });
+            it("doesn't flatten functions that capture variables", function() {
+                compare(function() {
+                    a(function (errA, valueA) {
+                        b(valueA, function (errB, valueB) {
+                            var x = valueB + 2;
+                            c(function (errC, valueC) {
+                                d(x, valueC, function(errD, valueD) {
+                                    console.log(valueD);
+                                });
+                            });
+                        });
+                    });
+                }, function() {
+                    a().then(function (valueA) {
+                        return b(valueA);
+                    }).then(function (valueB) {
+                        var x = valueB + 2;
+                        c().then(function (valueC) {
+                            return d(x, valueC);
+                        }).then(function (valueD) {
+                            console.log(valueD);
+                        });
+                    });
                 });
             });
         });
@@ -221,6 +297,7 @@ describe("promise-me basics", function() {
             });
         });
     });
+
 });
 
 })); // UMD

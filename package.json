@@ -22,7 +22,8 @@
   "dependencies": {
     "esprima": "~1.0.2",
     "escodegen": "~0.0.15",
-    "estraverse": "~0.0.4"
+    "estraverse": "~0.0.4",
+    "escope": "~0.0.12"
   },
   "devDependencies": {
     "jasmine-node": "1.0.x",
