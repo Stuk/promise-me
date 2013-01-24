@@ -10,5 +10,9 @@
     {
         "name": "Nested callbacks",
         "code": "getDetails('Bob', function (err, details) {\n    getLongLat(details.address, details.country, function(err, longLat) {\n        getNearbyBars(longLat, function(err, bars) {\n            console.log('Your nearest bar is: ' + bars[0]);\n        });\n    });\n});"
+    },
+    {
+        "name": "Captured variables",
+        "code": "getDetails('Bob', function (err, details) {\n    getLongLat(details.address, details.country, function(err, longLat) {\n        getNearbyBars(longLat, function(err, bars) {\n            // Note the captured `details` variable\n            console.log('The closest bar to ' + details.address + ' is: ' + bars[0]);\n        });\n    });\n});\n"
     }
 ]
