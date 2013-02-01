@@ -1,3 +1,9 @@
+v0.1.1
+======
+
+* Update escope to v0.0.13 which brings back support for script loading and
+  require.js/AMD.
+
 v0.1.0
 ======
 
