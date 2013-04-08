@@ -9,6 +9,8 @@ var Montage = require("montage").Montage,
 
 var convert = require("promise-me").convert;
 
+var TAB = "    ";
+
 /**
     Description TODO
     @class module:"ui/demo.reel".Demo
@@ -28,6 +30,29 @@ exports.Demo = Montage.create(Component, /** @lends module:"ui/demo.reel".Demo# 
 
     examplesController: {
         value: null
+    },
+
+    prepareForDraw: {
+        value: function () {
+            this.templateObjects.before.element.addEventListener("keydown", this, false);
+        }
+    },
+
+    handleKeydown: {
+        value: function(e) {
+            var target = e.target;
+            var keyCode = e.keyCode;
+
+            if (keyCode == 9) {
+                e.preventDefault();
+                var start = target.selectionStart;
+                var end = target.selectionEnd;
+
+                target.value = target.value.substring(0, start) + TAB + target.value.substring(end);
+
+                target.selectionStart = target.selectionEnd = start + TAB.length;
+            }
+        }
     }
 });
 
