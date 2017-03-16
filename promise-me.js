@@ -14,7 +14,8 @@ Licenced under the New BSD License. See LICENSE for details.
             require("esprima"),
             require("escodegen"),
             require("estraverse"),
-            require("escope")
+            require("escope"),
+            require('lodash')
         );
     } else if (typeof define === "function" && define.amd) {
         // AMD. Register as an anonymous module.
@@ -36,7 +37,7 @@ Licenced under the New BSD License. See LICENSE for details.
             root.escope
         );
     }
-}(this, function (exports, esprima, escodegen, estraverse, escope) {
+}(this, function (exports, esprima, escodegen, estraverse, escope, _) {
 
 function curry(fn) {
     var args = Array.prototype.slice.call(arguments, 1);
@@ -86,6 +87,9 @@ var defaultOptions = {
 
     matcher: hasNodeCallback,
     replacer: replaceNodeCallback,
+    matcherChrome: hasChromeCallback,
+    replacerChrome: replaceChromeCallback,
+    
     flattener: thenFlattener,
 };
 
@@ -128,6 +132,9 @@ exports.convert = function(code, options, log) {
     // Do the magic
     estraverse.replace(ast, {
         leave: curry(callbackReplacer,  options.matcher, options.replacer)
+    });
+    estraverse.replace(ast, {
+        leave: curry(callbackReplacer,  options.matcherChrome, options.replacerChrome)
     });
     estraverse.replace(ast, {
         enter: options.flattener
@@ -198,6 +205,57 @@ function replaceNodeCallback(node) {
         "arguments": callbackToThenArguments(callback)
     };
 }
+exports.CHROME_MATCHER = hasChromeCallback;
+function hasChromeCallback(node) {
+    var args = node.arguments;
+    
+    return node.type === "CallExpression" &&
+        args.length >= 2 &&
+        args[args.length - 2].type === "FunctionExpression" &&
+        // args[args.length - 1].params.length === 1 &&
+        args.length &&
+        args[args.length - 1].type === "FunctionExpression" &&
+        args[args.length - 1].params.length === 1;
+}
+
+exports.CHROME_REPLACER = replaceChromeCallback;
+function replaceChromeCallback(node) {
+    // the called function
+    var func = node;
+    // arguments to called function
+    var args = func.arguments;
+    // the last argument is the callback we need to turn into promise
+    // handlers
+    var errback = args.pop();
+    var callback = args.pop();
+
+    // TODO retain comments
+    return {/*
+            type: "CallExpression",
+            callee: {
+                type: "MemberExpression",
+                computed: false,
+                object: {*/
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "MemberExpression",
+                        "computed": false,
+                        "object": func,
+                        "property": {
+                            "type": "Identifier",
+                            "name": "then"
+                        }
+                    },
+                    "arguments": [callback]//callbackToThenArgumentsChrome(errback, callback)
+                /*},
+                property: {
+                    type: "Identifier",
+                    name: "catch"
+                }
+            },
+            arguments: [errback]*/
+        } ;
+}
 
 /**
  * Convert a Node callback to arguments for a then call.
@@ -215,6 +273,19 @@ function callbackToThenArguments(callback) {
     if (errback) {
         thenArgs.push(errback);
     }
+
+    return thenArgs;
+}
+
+function callbackToThenArgumentsChrome(errback, callback) {
+    var thenArgs = [callback, errback];
+
+    // var errorArg = callback.params.shift();
+
+    // var errback = getErrorHandler(callback, errorArg);
+    // if (errback) {
+    //     thenArgs.push(errback);
+    // }
 
     return thenArgs;
 }
@@ -280,7 +351,10 @@ function getErrorHandler(callback, errorArg) {
  */
 exports.FLATTENER = thenFlattener;
 function thenFlattener(node) {
-    if (isThenCallWithThenCallAsLastStatement(node)) {
+    var currentFuncName = isThenCallWithThenCallAsLastStatement(node);
+    console.log(currentFuncName)
+    if (currentFuncName.catch || currentFuncName.then) {
+        console.log('found',node)
         var resolvedFn = node.arguments[0];
         var body = resolvedFn.body.body;
         var lastStatement = body[body.length - 1];
@@ -343,7 +417,7 @@ function thenFlattener(node) {
                 object: node,
                 property: {
                     type: "Identifier",
-                    name: "then"
+                    name: currentFuncName.then ? "then" : (currentFuncName.catch ? 'catch' : '')
                 }
             },
             arguments: thenArguments
@@ -360,13 +434,14 @@ function thenFlattener(node) {
  */
 function isThenCallWithThenCallAsLastStatement(node) {
     var callee, firstArg, firstArgBody;
-    if (doesMatch(node, {
+    
+    var blankAnonFunc = {
         type: "CallExpression",
         callee: {
             type: "MemberExpression",
             property: {
                 type: "Identifier",
-                name: "then"
+                name: "__blank__"
             }
         },
         arguments: [
@@ -377,10 +452,17 @@ function isThenCallWithThenCallAsLastStatement(node) {
                 }
             }
         ]
-    })) {
-        var body = node.arguments[0].body.body;
-        var lastStatement = body[body.length - 1];
-        return doesMatch(lastStatement, {
+    };
+    
+    var thenAnonFunc = _.cloneDeep(blankAnonFunc);    
+    thenAnonFunc.callee.property.name = 'then';
+    var catchAnonFunc = _.cloneDeep(blankAnonFunc);
+    catchAnonFunc.callee.property.name = 'catch';
+    console.log(node, '*', thenAnonFunc, '*', catchAnonFunc)
+    
+    if (doesMatch(node, thenAnonFunc) || doesMatch(node, catchAnonFunc) ) {
+
+        var callBlankStmt = {
             type: "ExpressionStatement",
             expression: {
                 type: "CallExpression",
@@ -388,16 +470,27 @@ function isThenCallWithThenCallAsLastStatement(node) {
                     type: "MemberExpression",
                     property: {
                         type: "Identifier",
-                        name: "then"
+                        name: "__blank__"
                     }
                 }
             }
-        });
+        };
+        var callThenStmt = _.cloneDeep(callBlankStmt);
+        callThenStmt.expression.callee.property.name = 'then';
+        var callCatchStmt = _.cloneDeep(callBlankStmt);
+        callCatchStmt.expression.callee.property.name = 'catch';
+        
+        var body = node.arguments[0].body.body;
+        var lastStatement = body[body.length - 1];
+
+        return {
+            then: doesMatch(lastStatement, callThenStmt),
+            catch:  doesMatch(lastStatement, callCatchStmt)
+        };
     }
 
     return false;
 }
-
 /**
  * Returns true if and only if for every property in matchObject, object
  * contains the same property with the same value. Objects are compared deeply.
@@ -409,6 +502,7 @@ function isThenCallWithThenCallAsLastStatement(node) {
  * @param  {any} matchObject The object that object must match.
  * @return {boolean}             See above.
  */
+
 function doesMatch(object, matchObject) {
     if (!object || matchObject === null || typeof matchObject !== "object") {
         return object === matchObject;
